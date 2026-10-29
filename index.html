@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pomodoro Blur — Extensão Zen para Windows</title>
   <meta name="description" content="Um utilitário silencioso de foco para Windows inspirado no GNOME Pomodoro. Desfoque gaussiano suave durante as pausas, suporte multi-monitor e gatilho consciente de foco.">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/pomodoro.png">
+  <link rel="apple-touch-icon" href="assets/pomodoro.png">
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -464,8 +467,10 @@
 
   <!-- Toast Notification Discreto -->
   <div id="sim-toast" class="fixed bottom-8 right-8 z-[110] flex items-center gap-3 px-5 py-3.5 rounded-xl bg-[#141820]/95 border border-white/10 shadow-2xl backdrop-blur-md opacity-0 translate-y-4 pointer-events-none transition-all duration-300">
-    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-      <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+    <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+      <svg class="w-4 h-4 fill-current ml-0.5" viewBox="0 0 24 24">
+        <polygon points="6 4 20 12 6 20 6 4"></polygon>
+      </svg>
     </div>
     <div>
       <div class="text-sm font-semibold text-white">Ciclo de Foco iniciado</div>
