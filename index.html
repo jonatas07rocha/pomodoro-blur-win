@@ -462,6 +462,17 @@
     </div>
   </div>
 
+  <!-- Toast Notification Discreto -->
+  <div id="sim-toast" class="fixed bottom-8 right-8 z-[110] flex items-center gap-3 px-5 py-3.5 rounded-xl bg-[#141820]/95 border border-white/10 shadow-2xl backdrop-blur-md opacity-0 translate-y-4 pointer-events-none transition-all duration-300">
+    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+      <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+    </div>
+    <div>
+      <div class="text-sm font-semibold text-white">Ciclo de Foco iniciado</div>
+      <div class="text-xs text-white/50">A tela foi liberada • 25:00 de concentração</div>
+    </div>
+  </div>
+
   <script>
     // Citações Clássicas para a Demonstração
     const quotes = [
@@ -521,9 +532,24 @@
       document.getElementById('sim-overlay').classList.remove('active');
     }
 
+    let toastTimeout = null;
+    function mostrarToast() {
+      const toast = document.getElementById('sim-toast');
+      if (!toast) return;
+      if (toastTimeout) clearTimeout(toastTimeout);
+
+      toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+      }, 4000);
+    }
+
     function reiniciarSimulacao() {
       fecharSimulacao();
-      alert("Foco iniciado! A tela se dissolveu e o relógio de 25 minutos começou.");
+      mostrarToast();
     }
 
     // Tecla Esc fecha a simulação
