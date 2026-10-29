@@ -1,6 +1,6 @@
-# Pomodoro Blur (Windows)
+# Pomodoro Blur (Windows & Linux)
 
-Uma extensão leve e minimalista da Técnica Pomodoro para Windows inspirada no **GNOME Pomodoro**. Opera silenciosamente em segundo plano a partir da bandeja do sistema (*System Tray*), congelando as telas com um efeito suave de desfoque gaussiano (*frosted glass*) durante as pausas.
+Uma extensão leve e minimalista da Técnica Pomodoro para Windows e Linux inspirada no **GNOME Pomodoro**. Opera silenciosamente em segundo plano a partir da bandeja do sistema (*System Tray*), congelando as telas com um efeito suave de desfoque gaussiano (*frosted glass*) durante as pausas.
 
 ---
 
@@ -45,7 +45,7 @@ pomodoro-blur-win/
 
 ## Requisitos
 
-- Windows 10 ou Windows 11
+- Windows 10/11 ou distribuições Linux modernas (Ubuntu, Fedora, Debian, Mint, Arch, etc.)
 - Python 3.10 ou superior
 - Dependências listadas em `requirements.txt`:
   - `PyQt6`
@@ -67,8 +67,9 @@ pomodoro-blur-win/
    ```
 
 3. **Inicie a aplicação:**
-   - Dê dois cliques em `iniciar.bat` (ou execute `pythonw main.py`).
-   - O ícone aparecerá imediatamente na bandeja do sistema ao lado do relógio do Windows.
+   - **No Windows:** Dê dois cliques em `iniciar.bat` (ou execute `pythonw main.py`).
+   - **No Linux:** Execute `python3 main.py &` (ou crie um atalho na bandeja).
+   - O ícone aparecerá imediatamente na bandeja do sistema ao lado do relógio.
 
 ---
 

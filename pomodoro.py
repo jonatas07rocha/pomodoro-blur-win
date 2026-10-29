@@ -87,20 +87,49 @@ class PomodoroConfig:
 
 
 def is_autostart_enabled() -> bool:
-    return os.path.exists(STARTUP_LINK)
+    if sys.platform.startswith("win"):
+        return os.path.exists(STARTUP_LINK)
+    elif sys.platform.startswith("linux"):
+        desktop_file = os.path.expanduser("~/.config/autostart/pomodoro-blur.desktop")
+        return os.path.exists(desktop_file)
+    return False
 
 
 def set_autostart(enable: bool):
     try:
-        if enable:
-            pythonw = sys.executable.replace("python.exe", "pythonw.exe")
-            script = os.path.join(APP_DIR, "main.py")
-            cmd = f'$sh = New-Object -ComObject WScript.Shell; $s = $sh.CreateShortcut("{STARTUP_LINK}"); $s.TargetPath = "{pythonw}"; $s.Arguments = "\"{script}\""; $s.WorkingDirectory = "{APP_DIR}"; $s.Save()'
-            import subprocess
-            subprocess.run(["powershell", "-NoProfile", "-Command", cmd], capture_output=True)
-        else:
-            if os.path.exists(STARTUP_LINK):
-                os.remove(STARTUP_LINK)
+        if sys.platform.startswith("win"):
+            if enable:
+                pythonw = sys.executable.replace("python.exe", "pythonw.exe")
+                script = os.path.join(APP_DIR, "main.py")
+                cmd = f'$sh = New-Object -ComObject WScript.Shell; $s = $sh.CreateShortcut("{STARTUP_LINK}"); $s.TargetPath = "{pythonw}"; $s.Arguments = "\"{script}\""; $s.WorkingDirectory = "{APP_DIR}"; $s.Save()'
+                import subprocess
+                subprocess.run(["powershell", "-NoProfile", "-Command", cmd], capture_output=True)
+            else:
+                if os.path.exists(STARTUP_LINK):
+                    os.remove(STARTUP_LINK)
+        elif sys.platform.startswith("linux"):
+            desktop_dir = os.path.expanduser("~/.config/autostart")
+            desktop_file = os.path.join(desktop_dir, "pomodoro-blur.desktop")
+            if enable:
+                os.makedirs(desktop_dir, exist_ok=True)
+                script_path = os.path.join(APP_DIR, "main.py")
+                icon_path = os.path.join(APP_DIR, "assets", "pomodoro.png")
+                python_bin = sys.executable
+                content = f"""[Desktop Entry]
+Type=Application
+Name=Pomodoro Blur
+Comment=Utilitário Zen de Pomodoro
+Exec={python_bin} "{script_path}"
+Icon={icon_path}
+Terminal=false
+Categories=Utility;
+X-GNOME-Autostart-enabled=true
+"""
+                with open(desktop_file, "w", encoding="utf-8") as f:
+                    f.write(content)
+            else:
+                if os.path.exists(desktop_file):
+                    os.remove(desktop_file)
     except Exception as e:
         print(f"Erro ao alternar inicialização automática: {e}")
 
@@ -148,29 +177,57 @@ class QuoteManager:
 
 
 # ======================================================================================
-# 3. MOTOR DE SONS NATIVO (WINDOWS)
+# 3. MOTOR DE SONS MULTIPLATAFORMA (WINDOWS & LINUX)
 # ======================================================================================
 
 class SoundEngine:
     @staticmethod
     def _play_break():
-        try:
-            import winsound
-            notes = [(523, 110), (659, 110), (784, 130), (1046, 320)]
-            for freq, dur in notes:
-                winsound.Beep(freq, dur)
-        except Exception:
-            pass
+        if sys.platform.startswith("win"):
+            try:
+                import winsound
+                notes = [(523, 110), (659, 110), (784, 130), (1046, 320)]
+                for freq, dur in notes:
+                    winsound.Beep(freq, dur)
+            except Exception:
+                pass
+        elif sys.platform.startswith("linux"):
+            import shutil, subprocess
+            for cmd in [
+                ["canberra-gtk-play", "-i", "bell"],
+                ["paplay", "/usr/share/sounds/freedesktop/stereo/complete.oga"],
+                ["aplay", "-q", "/usr/share/sounds/sound-icons/prompt.wav"]
+            ]:
+                if shutil.which(cmd[0]):
+                    try:
+                        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        break
+                    except Exception:
+                        continue
 
     @staticmethod
     def _play_work():
-        try:
-            import winsound
-            notes = [(784, 90), (659, 90), (523, 260)]
-            for freq, dur in notes:
-                winsound.Beep(freq, dur)
-        except Exception:
-            pass
+        if sys.platform.startswith("win"):
+            try:
+                import winsound
+                notes = [(784, 90), (659, 90), (523, 260)]
+                for freq, dur in notes:
+                    winsound.Beep(freq, dur)
+            except Exception:
+                pass
+        elif sys.platform.startswith("linux"):
+            import shutil, subprocess
+            for cmd in [
+                ["canberra-gtk-play", "-i", "dialog-information"],
+                ["paplay", "/usr/share/sounds/freedesktop/stereo/message.oga"],
+                ["aplay", "-q", "/usr/share/sounds/sound-icons/prompt.wav"]
+            ]:
+                if shutil.which(cmd[0]):
+                    try:
+                        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        break
+                    except Exception:
+                        continue
 
     @classmethod
     def play_break(cls):
@@ -437,6 +494,11 @@ class PomodoroEngine(QWidget):
 
 def generate_blurred_pixmap(pixmap: QPixmap, blur_radius: int = 16, dim_factor: float = 0.35) -> QPixmap:
     try:
+        if pixmap.isNull() or pixmap.width() <= 0 or pixmap.height() <= 0:
+            fallback = QPixmap(1920, 1080)
+            fallback.fill(QColor(15, 23, 42))
+            return fallback
+
         qimg = pixmap.toImage().convertToFormat(QImage.Format.Format_RGBA8888)
         w, h = qimg.width(), qimg.height()
         ptr = qimg.bits()
@@ -454,7 +516,11 @@ def generate_blurred_pixmap(pixmap: QPixmap, blur_radius: int = 16, dim_factor: 
         return QPixmap.fromImage(qimg_out)
     except Exception as e:
         print(f"Erro no processamento do blur: {e}")
-        return pixmap
+        if not pixmap.isNull() and pixmap.width() > 0 and pixmap.height() > 0:
+            return pixmap
+        fallback = QPixmap(1920, 1080)
+        fallback.fill(QColor(15, 23, 42))
+        return fallback
 
 
 class SingleScreenOverlay(QWidget):
@@ -469,11 +535,15 @@ class SingleScreenOverlay(QWidget):
         self.blurred_pixmap = blurred_pixmap
         self.is_prompt_mode = False
 
-        self.setWindowFlags(
+        flags = (
             Qt.WindowType.WindowStaysOnTopHint |
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.Tool
         )
+        if sys.platform.startswith("linux") and os.environ.get("XDG_SESSION_TYPE") != "wayland":
+            flags |= Qt.WindowType.BypassWindowManagerHint
+
+        self.setWindowFlags(flags)
         self.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setWindowOpacity(0.0)
@@ -653,7 +723,16 @@ class BlurOverlayManager(QWidget):
         current_quote = self.quote_manager.get_next_quote()
 
         for screen in screens:
-            pixmap = screen.grabWindow(0)
+            try:
+                pixmap = screen.grabWindow(0)
+            except Exception:
+                pixmap = QPixmap()
+
+            if pixmap.isNull() or pixmap.width() <= 0 or pixmap.height() <= 0:
+                geo = screen.geometry()
+                pixmap = QPixmap(geo.width(), geo.height())
+                pixmap.fill(QColor(15, 23, 42))
+
             blurred = generate_blurred_pixmap(pixmap, self.config.blur_radius, self.config.dim_factor)
 
             is_main = (screen == primary)
@@ -1023,12 +1102,16 @@ class PomodoroSystemExtension(QWidget):
         act_sound.setChecked(self.config.enable_sound)
         act_sound.triggered.connect(self._toggle_sound)
 
-        act_notif = menu.addAction(get_lucide_icon("bell", "#94a3b8", 16), "Notificações do Windows")
+        is_win = sys.platform.startswith("win")
+        notif_text = "Notificações do Windows" if is_win else "Notificações do Sistema"
+        auto_text = "Iniciar com o Windows" if is_win else "Iniciar com o Sistema"
+
+        act_notif = menu.addAction(get_lucide_icon("bell", "#94a3b8", 16), notif_text)
         act_notif.setCheckable(True)
         act_notif.setChecked(self.config.enable_tray_notifications)
         act_notif.triggered.connect(self._toggle_notif)
 
-        act_auto = menu.addAction(get_lucide_icon("power", "#94a3b8", 16), "Iniciar com o Windows")
+        act_auto = menu.addAction(get_lucide_icon("power", "#94a3b8", 16), auto_text)
         act_auto.setCheckable(True)
         act_auto.setChecked(is_autostart_enabled())
         act_auto.triggered.connect(self._toggle_autostart)
