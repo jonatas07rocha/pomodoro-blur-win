@@ -1,0 +1,12 @@
+{
+    "work_duration_min": 25,
+    "short_break_min": 5,
+    "long_break_min": 15,
+    "cycles_before_long_break": 4,
+    "blur_radius": 10,
+    "dim_factor": 0.5,
+    "enable_sound": true,
+    "auto_start_break": true,
+    "auto_start_work": false,
+    "allow_esc_skip": true
+}
